@@ -1,7 +1,7 @@
 #include "ImageLoader.h"
 #include "Logger.h"
 
-ImageLoader::ImageLoader(SDL_Window *window, SDL_Renderer *renderer, const fs::path &basePath)
+ImageLoader::ImageLoader(SDL_Window *window, SDL_Renderer *renderer, const std::string &basePath)
 {
     m_windowPtr     = window;
     m_rendererPtr   = renderer;
@@ -29,7 +29,7 @@ int ImageLoader::loadImage(const std::string &filename, const std::string &name)
     if (fileExtension.compare("bmp"))
         Logger::warning("File extension is not BMP");
 
-    SDL_Surface *imageSurface{SDL_LoadBMP((m_basePath / fs::path{filename}).c_str())};
+    SDL_Surface *imageSurface{SDL_LoadBMP((fs::path{m_basePath} / fs::path{filename}).string().c_str())};
 
     if (!imageSurface)
     {

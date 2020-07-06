@@ -1,3 +1,5 @@
+#define SDL_MAIN_HANDLED
+
 #include <SDL2/SDL.h>
 #include <iostream>
 #include <vector>
@@ -483,4 +485,6 @@ int main()
     SDL_Quit();
 
     Logger::info("End");
+
+    return 0;
 }

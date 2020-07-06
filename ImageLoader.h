@@ -4,6 +4,7 @@
 #include <SDL2/SDL.h>
 #include <map>
 #include <filesystem>
+#include <string>
 
 namespace fs = std::filesystem;
 
@@ -27,7 +28,7 @@ public:
      * "renderer" is an SDL_Renderer where you want to render the images.
      * "basepath" is the current working directory.
      */
-    ImageLoader(SDL_Window *window, SDL_Renderer *renderer, const fs::path &basePath);
+    ImageLoader(SDL_Window *window, SDL_Renderer *renderer, const std::string &basePath);
 
     /*
      * Loads and image. Stores it as the specified name or if it is empty, uses the filename without the path and extension.
