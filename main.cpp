@@ -462,14 +462,13 @@ int main()
 
     ImageLoader *imageLoader{loadImages(window, renderer)};
 
-    // Seed std::rand()
     std::srand(std::time(nullptr));
 
-    bool didUserExit{!showMenu(window, renderer, imageLoader)};
+    bool hasUserExited{!showMenu(window, renderer, imageLoader)};
 
 
-    // Don't start if the user closed the window while the main menu was being showed
-    while (!didUserExit)
+    // Don't start if the user closed the window while the main menu was being shown
+    while (!hasUserExited)
     {
         if (!mainLoop(window, renderer, imageLoader))
             break;
