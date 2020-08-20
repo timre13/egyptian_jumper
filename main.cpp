@@ -15,14 +15,17 @@
 #include "Camera.h"
 #include "Heart.h"
 #include "Fire.h"
+#include "sound_file_paths.h"
+#include "Sound.h"
+#include "SoundLoader.h"
 
-int WINDOW_WIDTH{1500};
-int WINDOW_HEIGHT{1000};
-int PLAYER_SPEED{6};
-int INITIAL_PLAYER_HP{20};
-int PLAYER_DAMAGE{5};
+int  WINDOW_WIDTH{1500};
+int  WINDOW_HEIGHT{1000};
+int  PLAYER_SPEED{6};
+int  INITIAL_PLAYER_HP{20};
+int  PLAYER_DAMAGE{5};
 bool DAMAGE_PLAYER_WHEN_OUT_OF_SCREEN{true};
-int LEVEL_WIDTH{10000};
+int  LEVEL_WIDTH{10000};
 
 int g_lastPlayerScore{};
 
@@ -93,8 +96,20 @@ ImageLoader *loadImages(SDL_Window *window, SDL_Renderer *renderer)
     return imageLoader;
 }
 
+SoundLoader *loadSounds()
+{
+    SoundLoader *soundLoader = new SoundLoader{SOUND_PATH_ROOT};
+
+    soundLoader->loadSound(SOUND_FILENAME_HEART_PICKED_UP);
+    soundLoader->loadSound(SOUND_FILENAME_COIN_PICKED_UP);
+    soundLoader->loadSound(SOUND_FILENAME_PLAYER_DIED);
+    soundLoader->loadSound(SOUND_FILENAME_ENTITY_DAMAGED);
+
+    return soundLoader;
+}
+
 // returns true if the player is dead
-bool mainLoop(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoader)
+bool mainLoop(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoader, SoundLoader *soundLoader)
 {
     using size_type = std::vector<int>::size_type;
 
@@ -171,12 +186,24 @@ bool mainLoop(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoad
             fire->update();
 
         for (auto ghost : ghostList)
+        {
             if (ghost->getIsColliding(player))
+            {
                 player->damage(ghost->getDamageAmount());
 
+                Sound::play(soundLoader->getSound(SOUND_NAME_ENTITY_DAMAGED));
+            }
+        }
+
         for (auto fire : fireList)
+        {
             if (fire->getIsColliding(player))
+            {
                 player->damage(fire->getDamageAmount());
+
+                Sound::play(soundLoader->getSound(SOUND_NAME_ENTITY_DAMAGED));
+            }
+        }
 
         for (size_type i{}; i < coinList.size(); ++i)
         {
@@ -184,6 +211,8 @@ bool mainLoop(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoad
             {
                 player->addScore(coinList[i]->getDamageAmount());
                 coinList[i]->kill();
+
+                Sound::play(soundLoader->getSound(SOUND_NAME_COIN_PICKED_UP));
             }
         }
 
@@ -193,6 +222,8 @@ bool mainLoop(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoad
             {
                 player->addHealth(heartList[i]->getDamageAmount());
                 heartList[i]->kill();
+
+                Sound::play(soundLoader->getSound(SOUND_NAME_HEART_PICKED_UP));
             }
         }
 
@@ -320,6 +351,9 @@ bool mainLoop(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoad
     } // end of main loop
 
     bool isPlayerDead{player->getIsDead()};
+
+    if (isPlayerDead)
+        Sound::play(soundLoader->getSound(SOUND_NAME_PLAYER_DIED));
 
     g_lastPlayerScore = player->getScore();
 
@@ -460,17 +494,19 @@ int main()
     SDL_Renderer *renderer{nullptr};
     initVideo(window, renderer);
 
+    Sound::init();
+
     ImageLoader *imageLoader{loadImages(window, renderer)};
+    SoundLoader *soundLoader{loadSounds()};
 
     std::srand(std::time(nullptr));
 
     bool hasUserExited{!showMenu(window, renderer, imageLoader)};
 
-
     // Don't start if the user closed the window while the main menu was being shown
     while (!hasUserExited)
     {
-        if (!mainLoop(window, renderer, imageLoader))
+        if (!mainLoop(window, renderer, imageLoader, soundLoader))
             break;
 
         if (!askRestart(window, renderer, imageLoader))
@@ -478,6 +514,8 @@ int main()
     }
 
     delete imageLoader;
+
+    Sound::quit();
 
     SDL_DestroyWindow(window);
     SDL_DestroyRenderer(renderer);
