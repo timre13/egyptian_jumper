@@ -505,6 +505,7 @@ int main()
     }
 
     delete imageLoader;
+    delete soundLoader;
 
     Sound::quit();
 
