@@ -23,7 +23,6 @@ int  WINDOW_WIDTH{1500};
 int  WINDOW_HEIGHT{1000};
 int  PLAYER_SPEED{6};
 int  INITIAL_PLAYER_HP{20};
-int  PLAYER_DAMAGE{5};
 bool DAMAGE_PLAYER_WHEN_OUT_OF_SCREEN{true};
 int  LEVEL_WIDTH{10000};
 
@@ -122,7 +121,7 @@ bool mainLoop(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoad
     for (int i{}; i < LEVEL_WIDTH/100; ++i)
         wallList.push_back(new Wall{570+200*i+rand()%200, lastTileY+rand()%50-50/2+j*500, 80, 40, renderer, imageLoader});
 
-    Player *player = new Player{500, 0, 45, 150, renderer, imageLoader, INITIAL_PLAYER_HP, PLAYER_DAMAGE, &wallList};
+    Player *player = new Player{500, 0, 45, 150, renderer, imageLoader, INITIAL_PLAYER_HP, 0, &wallList};
 
     std::vector<Ghost*> ghostList;
     for (int i{}; i < LEVEL_WIDTH/200; ++i)
