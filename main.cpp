@@ -26,6 +26,8 @@ int  INITIAL_PLAYER_HP{20};
 int  LEVEL_WIDTH{10000};
 
 int g_lastPlayerScore{};
+bool g_exited{};
+bool g_isDebugMode{};
 
 /*
  * Initializes SDL and creates the window and the renderer.
@@ -62,7 +64,7 @@ void initVideo(SDL_Window *&window, SDL_Renderer *&renderer)
 /*
  * Creates an ImageLoader object, returns a pointer to it and loads the images.
  */
-ImageLoader *loadImages(SDL_Window *window, SDL_Renderer *renderer)
+ImageLoader* loadImages(SDL_Window *window, SDL_Renderer *renderer)
 {
     ImageLoader *imageLoader = new ImageLoader{window, renderer, "assets/images"};
     imageLoader->loadImage("background_wall_sandstone.bmp", "background_wall");
@@ -83,7 +85,6 @@ ImageLoader *loadImages(SDL_Window *window, SDL_Renderer *renderer)
     imageLoader->loadImage("heart_0.bmp");
     imageLoader->loadImage("heart_1.bmp");
     imageLoader->loadImage("platform.bmp", "wall");
-    imageLoader->loadImage("play_again_text.bmp");
     for (int i{}; i < 5; ++i)
     imageLoader->loadImage("fire_"+std::to_string(i)+".bmp");
     imageLoader->loadImage("press_space_text.bmp");
@@ -94,7 +95,7 @@ ImageLoader *loadImages(SDL_Window *window, SDL_Renderer *renderer)
     return imageLoader;
 }
 
-SoundLoader *loadSounds()
+SoundLoader* loadSounds()
 {
     SoundLoader *soundLoader = new SoundLoader{SOUND_PATH_ROOT};
 
@@ -106,8 +107,11 @@ SoundLoader *loadSounds()
     return soundLoader;
 }
 
-// returns true if the player is dead
-bool mainLoop(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoader, SoundLoader *soundLoader)
+/*
+ * Handles the game logics, events and rendering.
+ * Sets g_exited to true if the player closed the window.
+ */
+void gameLoop(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoader, SoundLoader *soundLoader)
 {
     using size_type = std::vector<int>::size_type;
 
@@ -141,11 +145,10 @@ bool mainLoop(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoad
 
     // ----------------------------------------------------
 
-    bool done{};
-    bool isDebugMode{false};
     double cameraSpeed{0.5}; // real_speed = playerSpeed * cameraSpeed
+    bool isPlayerDead{};
 
-    while (!done) // main loop
+    while (!g_exited && !isPlayerDead) // main loop
     {
         SDL_Event event;
         while (SDL_PollEvent(&event))
@@ -153,14 +156,14 @@ bool mainLoop(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoad
             switch (event.type)
             {
             case SDL_QUIT:
-                done = true;
+                g_exited = true;
                 break;
 
-            case SDL_KEYDOWN:
+            case SDL_KEYUP:
                 switch (event.key.keysym.sym)
                 {
                 case SDLK_F3:
-                    isDebugMode = !isDebugMode;
+                    g_isDebugMode = !g_isDebugMode;
                     break;
                 }
                 break;
@@ -168,9 +171,9 @@ bool mainLoop(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoad
         } // end of event processing loop
 
         if (player->getIsDead())
-            done = true;
+            isPlayerDead = true;
 
-        if (done)
+        if (g_exited || isPlayerDead)
             break;
 
         // ------------ update objects --------------------
@@ -310,7 +313,7 @@ bool mainLoop(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoad
         // ------------------------------------------------
 
         // ----- render hitboxes if in debug mode ---------
-        if (isDebugMode)
+        if (g_isDebugMode)
         {
             for (auto coin : coinList)
                 coin->renderHitbox(camera);
@@ -341,8 +344,7 @@ bool mainLoop(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoad
 
     } // end of main loop
 
-    bool isPlayerDead{player->getIsDead()};
-
+    isPlayerDead = player->getIsDead();
     if (isPlayerDead)
         Sound::play(soundLoader->getSound(SOUND_NAME_PLAYER_DIED));
 
@@ -361,42 +363,32 @@ bool mainLoop(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoad
         delete fire;
 
     delete camera;
-
-    return isPlayerDead;
 }
 
-// returns true if the user wants to play again, otherwise returns false
-bool askRestart(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoader)
+/*
+ * Shows the score of the player
+ * and sets g_exited to true if the player closed the window.
+ */
+void showScore(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoader)
 {
-    while (true)
+    while (!g_exited)
     {
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
-            switch (event.type)
+            if (event.type == SDL_QUIT)
             {
-            case SDL_QUIT:
-                return false;
-                break;
-
-            case SDL_KEYUP:
-                switch (event.key.keysym.sym)
-                {
-                case SDLK_ESCAPE:
-                    return false;
-
-                case SDLK_SPACE:
-                    return true;
-                }
-                break;
+                g_exited = true;
+                return;
+            }
+            else if (event.type == SDL_KEYUP &&
+                     event.key.keysym.sym == SDLK_SPACE)
+            {
+                return;
             }
         } // end of event processing loop
 
         if (SDL_RenderCopy(renderer, imageLoader->getImage("background_wall"), nullptr, nullptr))
-            Logger::error("SDL_RenderCopy() failed: "+std::string(SDL_GetError()));
-
-        SDL_Rect logoRect{250, 300, 1000, 150};
-        if (SDL_RenderCopy(renderer, imageLoader->getImage("logo"), nullptr, &logoRect))
             Logger::error("SDL_RenderCopy() failed: "+std::string(SDL_GetError()));
 
         SDL_Rect scoreTextRect{500, 550, 300, 80};
@@ -412,43 +404,34 @@ bool askRestart(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLo
                 Logger::error("SDL_RenderCopy() failed: "+std::string(SDL_GetError()));
         }
 
-        SDL_Rect playAgainTextRect{350, 700, 800, 400};
-        if (SDL_RenderCopy(renderer, imageLoader->getImage("play_again_text"), nullptr, &playAgainTextRect))
-            Logger::error("SDL_RenderCopy() failed: "+std::string(SDL_GetError()));
-
         SDL_RenderPresent(renderer);
         SDL_Delay(40);
     }
-
-    return false; // this is impossible
 }
 
-// returns true if the user did NOT close the window
-bool showMenu(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoader)
+/*
+ * Shows the main menu, sets g_exited to true if the player closed the window.
+ */
+void showMainMenu(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoader)
 {
     uint8_t textAlpha{0};
     bool isTextAlphaIncrementing{true};
 
-    while (true)
+    while (!g_exited)
     {
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
-            switch (event.type)
+            if (event.type == SDL_QUIT)
             {
-            case SDL_QUIT:
-                return false;
-                break;
-
-            case SDL_KEYUP:
-                switch (event.key.keysym.sym)
-                {
-                case SDLK_SPACE:
-                    return true;
-                }
-                break;
+                g_exited = true;
+                return;
             }
-        } // end of event processing loop
+            else if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_SPACE)
+            {
+                return;
+            }
+        }
 
         if (SDL_RenderCopy(renderer, imageLoader->getImage("background_wall"), nullptr, nullptr))
             Logger::error("SDL_RenderCopy() failed: "+std::string(SDL_GetError()));
@@ -475,8 +458,6 @@ bool showMenu(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoad
         else if (textAlpha == 0)
             isTextAlphaIncrementing = true;
     }
-
-    return false; // this is impossible
 }
 
 int main()
@@ -492,15 +473,22 @@ int main()
 
     std::srand(std::time(nullptr));
 
-    bool hasUserExited{!showMenu(window, renderer, imageLoader)};
 
-    // Don't start if the user closed the window while the main menu was being shown
-    while (!hasUserExited)
+    while (true)
     {
-        if (!mainLoop(window, renderer, imageLoader, soundLoader))
+        showMainMenu(window, renderer, imageLoader);
+
+        if (g_exited)
             break;
 
-        if (!askRestart(window, renderer, imageLoader))
+        gameLoop(window, renderer, imageLoader, soundLoader);
+
+        if (g_exited)
+            break;
+
+        showScore(window, renderer, imageLoader);
+
+        if (g_exited)
             break;
     }
 
