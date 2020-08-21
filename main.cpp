@@ -23,7 +23,6 @@ int  WINDOW_WIDTH{1500};
 int  WINDOW_HEIGHT{1000};
 int  PLAYER_SPEED{6};
 int  INITIAL_PLAYER_HP{20};
-bool DAMAGE_PLAYER_WHEN_OUT_OF_SCREEN{true};
 int  LEVEL_WIDTH{10000};
 
 int g_lastPlayerScore{};
@@ -327,17 +326,10 @@ bool mainLoop(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoad
         }
         // ------------------------------------------------
 
-        if (DAMAGE_PLAYER_WHEN_OUT_OF_SCREEN)
-        {
-            camera->setX(camera->getX()+(PLAYER_SPEED*cameraSpeed));
+        camera->setX(camera->getX()+(PLAYER_SPEED*cameraSpeed));
 
-            if (player->getX() < camera->getX()-45)
-                player->damage(1);
-        }
-        else
-        {
-            camera->setX(player->getX()-WINDOW_WIDTH/2);
-        }
+        if (player->getX() < camera->getX()-45)
+            player->damage(1);
 
         camera->setY(player->getY()-WINDOW_HEIGHT/2);
 
