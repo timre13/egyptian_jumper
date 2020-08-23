@@ -341,7 +341,7 @@ void gameLoop(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoad
             cameraSpeed += 0.0005;
 
         SDL_RenderPresent(renderer);
-        SDL_Delay(16.67);
+        SDL_Delay(16);
 
     } // end of main loop
 
@@ -416,8 +416,9 @@ void showScore(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoa
  */
 void showMainMenu(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoader, SoundLoader *soundLoader)
 {
-    uint8_t textAlpha{0};
-    bool isTextAlphaIncrementing{true};
+    uint8_t pressSpaceTextAlpha{0};
+    bool isPressSpaceTextAlphaIncrementing{true};
+    int logoY{-150};
 
     while (!g_exited)
     {
@@ -439,27 +440,30 @@ void showMainMenu(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *image
         if (SDL_RenderCopy(renderer, imageLoader->getImage("background_wall"), nullptr, nullptr))
             Logger::error("SDL_RenderCopy() failed: "+std::string(SDL_GetError()));
 
-        SDL_Rect logoRect{250, 400, 1000, 150};
+        SDL_Rect logoRect{250, logoY, 1000, 150};
         if (SDL_RenderCopy(renderer, imageLoader->getImage("logo"), nullptr, &logoRect))
             Logger::error("SDL_RenderCopy() failed: "+std::string(SDL_GetError()));
 
-        if (SDL_SetTextureAlphaMod(imageLoader->getImage("press_space_text"), textAlpha))
+        if (SDL_SetTextureAlphaMod(imageLoader->getImage("press_space_text"), pressSpaceTextAlpha))
             Logger::error("SDL_SetTextureAlphaMod() failed: "+std::string(SDL_GetError()));
         SDL_Rect pressSpaceRect{550, 800, 400, 60};
         if (SDL_RenderCopy(renderer, imageLoader->getImage("press_space_text"), nullptr, &pressSpaceRect))
             Logger::error("SDL_RenderCopy() failed: "+std::string(SDL_GetError()));
 
         SDL_RenderPresent(renderer);
-        SDL_Delay(40);
+        SDL_Delay(16);
 
-        if (textAlpha < 255 && isTextAlphaIncrementing)
-            textAlpha += 5;
-        else if (textAlpha > 0 && !isTextAlphaIncrementing)
-            textAlpha -= 5;
-        else if (textAlpha == 255)
-            isTextAlphaIncrementing = false;
-        else if (textAlpha == 0)
-            isTextAlphaIncrementing = true;
+        if (pressSpaceTextAlpha < 255 && isPressSpaceTextAlphaIncrementing)
+            pressSpaceTextAlpha += 5;
+        else if (pressSpaceTextAlpha > 0 && !isPressSpaceTextAlphaIncrementing)
+            pressSpaceTextAlpha -= 5;
+        else if (pressSpaceTextAlpha == 255)
+            isPressSpaceTextAlphaIncrementing = false;
+        else if (pressSpaceTextAlpha == 0)
+            isPressSpaceTextAlphaIncrementing = true;
+
+        if (logoY < 400)
+            logoY += 30;
     }
 }
 
