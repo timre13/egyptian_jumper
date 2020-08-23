@@ -21,9 +21,6 @@ void play(SoundObject *soundObject)
     if (deviceID == -1)
         deviceID = SDL_OpenAudioDevice(nullptr, false, &soundObject->spec, nullptr, false);
 
-    if (deviceID <= 2 && deviceID != -1)
-        Logger::error("Failed to open audio device: "+std::string(SDL_GetError()));
-
     SDL_ClearQueuedAudio(deviceID);
 
     if (SDL_QueueAudio(deviceID, soundObject->buffer, soundObject->length))
