@@ -103,6 +103,7 @@ SoundLoader* loadSounds()
     soundLoader->loadSound(SOUND_FILENAME_COIN_PICKED_UP);
     soundLoader->loadSound(SOUND_FILENAME_PLAYER_DIED);
     soundLoader->loadSound(SOUND_FILENAME_ENTITY_DAMAGED);
+    soundLoader->loadSound(SOUND_FILENAME_MENU_USED);
 
     return soundLoader;
 }
@@ -369,7 +370,7 @@ void gameLoop(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoad
  * Shows the score of the player
  * and sets g_exited to true if the player closed the window.
  */
-void showScore(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoader)
+void showScore(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoader, SoundLoader *soundLoader)
 {
     while (!g_exited)
     {
@@ -384,6 +385,7 @@ void showScore(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoa
             else if (event.type == SDL_KEYUP &&
                      event.key.keysym.sym == SDLK_SPACE)
             {
+                Sound::play(soundLoader->getSound(SOUND_NAME_MENU_USED));
                 return;
             }
         } // end of event processing loop
@@ -412,7 +414,7 @@ void showScore(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoa
 /*
  * Shows the main menu, sets g_exited to true if the player closed the window.
  */
-void showMainMenu(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoader)
+void showMainMenu(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *imageLoader, SoundLoader *soundLoader)
 {
     uint8_t textAlpha{0};
     bool isTextAlphaIncrementing{true};
@@ -429,6 +431,7 @@ void showMainMenu(SDL_Window *window, SDL_Renderer *renderer, ImageLoader *image
             }
             else if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_SPACE)
             {
+                Sound::play(soundLoader->getSound(SOUND_NAME_MENU_USED));
                 return;
             }
         }
@@ -476,7 +479,7 @@ int main()
 
     while (true)
     {
-        showMainMenu(window, renderer, imageLoader);
+        showMainMenu(window, renderer, imageLoader, soundLoader);
 
         if (g_exited)
             break;
@@ -486,7 +489,7 @@ int main()
         if (g_exited)
             break;
 
-        showScore(window, renderer, imageLoader);
+        showScore(window, renderer, imageLoader, soundLoader);
 
         if (g_exited)
             break;
