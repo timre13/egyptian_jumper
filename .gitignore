@@ -1,0 +1,10 @@
+.cproject
+.project
+.settings
+egyptian_jumper
+Debug
+SDL2.dll
+egyptian_jumper.exe
+egyptian_jumper_win_x86.zip
+egyptian_jumper_win_x86/
+*.gch
